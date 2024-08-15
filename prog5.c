@@ -3,10 +3,8 @@
 #include <ctype.h>
 
 #define MAX_TEXT_LENGTH 100
-
 #define ALPHABET_SIZE 26
 
-// Function to encrypt plaintext using the poly-alphabetic cipher
 void encrypt(char plaintext[], char keyword[], char ciphertext[]) {
     int i, j;
     int keywordLen = strlen(keyword);
@@ -14,7 +12,7 @@ void encrypt(char plaintext[], char keyword[], char ciphertext[]) {
 
     for (i = 0, j = 0; i < textLen; ++i, ++j) {
         if (j == keywordLen) j = 0;
-
+ 
         if (isalpha(plaintext[i])) {
             int shift = tolower(keyword[j]) - 'a';
 
@@ -25,13 +23,12 @@ void encrypt(char plaintext[], char keyword[], char ciphertext[]) {
             }
         } else {
             ciphertext[i] = plaintext[i];
-            --j; // Not a letter, so don't increment j
+            --j;
         }
     }
-    ciphertext[textLen] = '\0'; // Null-terminate the string
+    ciphertext[textLen] = '\0';
 }
 
-// Function to decrypt ciphertext using the poly-alphabetic cipher
 void decrypt(char ciphertext[], char keyword[], char decryptedtext[]) {
     int i, j;
     int keywordLen = strlen(keyword);
@@ -50,10 +47,10 @@ void decrypt(char ciphertext[], char keyword[], char decryptedtext[]) {
             }
         } else {
             decryptedtext[i] = ciphertext[i];
-            --j; // Not a letter, so don't increment j
+            --j;
         }
     }
-    decryptedtext[textLen] = '\0'; // Null-terminate the string
+    decryptedtext[textLen] = '\0';
 }
 
 int main() {
@@ -62,11 +59,11 @@ int main() {
 
     printf("Enter plaintext: ");
     fgets(plaintext, sizeof(plaintext), stdin);
-    plaintext[strcspn(plaintext, "\n")] = '\0'; // Remove newline character
+    plaintext[strcspn(plaintext, "\n")] = '\0';
 
     printf("Enter keyword: ");
     fgets(keyword, sizeof(keyword), stdin);
-    keyword[strcspn(keyword, "\n")] = '\0'; // Remove newline character
+    keyword[strcspn(keyword, "\n")] = '\0';
 
     char ciphertext[strlen(plaintext) + 1];
     char decryptedtext[strlen(plaintext) + 1];
