@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -14,11 +13,11 @@ void encrypt(char *plaintext, char *key, char *ciphertext) {
             }
         }
         else {
-            ciphertext[i] = plaintext[i]; // For blank spaces
+            ciphertext[i] = plaintext[i];
         }
     }
     ciphertext[len] = '\0';
-}
+} 
 
 void decrypt(char *ciphertext, char *key, char *plaintext) {
     int len = strlen(ciphertext);
@@ -36,13 +35,14 @@ void decrypt(char *ciphertext, char *key, char *plaintext) {
             }
         }
         else {
-            plaintext[i] = ciphertext[i];  // For blank spaces
+            plaintext[i] = ciphertext[i];
         }
     }
     plaintext[len] = '\0';
 }
 
-int main() {
+int main()
+{
     char plaintext[100];
     char key[] = "QWERTYUIOPASDFGHJKLZXCVBNM";
     char ciphertext[100];
@@ -50,7 +50,7 @@ int main() {
 
     printf("Enter the plaintext: ");
     fgets(plaintext, sizeof(plaintext), stdin);
-    plaintext[strcspn(plaintext, "\n")] = '\0'; // Remove the newline character
+    plaintext[strcspn(plaintext, "\n")] = '\0';
 
     printf("Plaintext: %s\n", plaintext);
 
