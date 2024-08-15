@@ -1,235 +1,127 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
-#define SIZE 30
+#define MAX_SIZE 100
 
-void toLowerCase(char plain[], int ps)
-{
-    int i;
-    for (i = 0; i < ps; i++)
-    {
-        if (plain[i] > 64 && plain[i] < 91)
-            plain[i] += 32;
+void preprocess(char *key, char *new_key) {
+    int flag[26] = {0}, len = strlen(key), j = 0;
+    for (int i = 0; i < len; i++) {
+        char offset = toupper(key[i]);
+        if (offset != 'J' && !flag[offset - 'A']) {
+            new_key[j++] = offset;
+            flag[offset - 'A'] = 1;
+        }
+    }
+    for (int i = 0; i < 26; i++) {
+        if (!flag[i] && i != 9) {                               
+            new_key[j++] = 'A' + i;  // Skip 'J'
+        }
+    }
+    new_key[j] = '\0';
+}
+
+void printKeyMatrix(char *new_key) {
+    printf("The Key MATRIX:\n");
+    for (int i = 0; i < 25; i++) {
+        printf("%c ", new_key[i]);
+        if ((i + 1) % 5 == 0) {
+            printf("\n");
+        }
     }
 }
 
-int removeSpaces(char *plain, int ps)
-{
-    int i, count = 0;
-    for (i = 0; i < ps; i++)
-        if (plain[i] != ' ')
-            plain[count++] = plain[i];
-    plain[count] = '\0';
-    return count;
-}
-
-void generateKeyTable(char key[], int ks, char keyT[5][5])
-{
-    int i, j, k, flag = 0, *dicty;
-
-    dicty = (int *)calloc(26, sizeof(int));
-    for (i = 0; i < ks; i++)
-    {
-        if (key[i] != 'j')
-            dicty[key[i] - 97] = 2;
-    }
-
-    dicty['j' - 97] = 1;
-
-    i = 0;
-    j = 0;
-
-    for (k = 0; k < ks; k++)
-    {
-        if (dicty[key[k] - 97] == 2)
-        {
-            dicty[key[k] - 97] -= 1;
-            keyT[i][j] = key[k];
-            j++;
-            if (j == 5)
-            {
-                i++;
-                j = 0;
+void formatMessage(char *message) {
+    int len = strlen(message);
+    char formatted[MAX_SIZE];
+    int idx = 0;
+    for (int i = 0; i < len; i++) {
+        char offset = toupper(message[i]);
+        if (isalpha(offset)) {
+            formatted[idx++] = offset;
+            if (i + 1 < len && offset == toupper(message[i + 1])) {
+                formatted[idx++] = 'X';
             }
         }
     }
-
-    for (k = 0; k < 26; k++)
-    {
-        if (dicty[k] == 0)
-        {
-            keyT[i][j] = (char)(k + 97);
-            j++;
-            if (j == 5)
-            {
-                i++;
-                j = 0;
-            }
-        }
+    if (idx % 2 != 0) {
+        formatted[idx++] = 'X';
     }
+    formatted[idx] = '\0';
+    strcpy(message, formatted);
 }
 
-void search(char keyT[5][5], char a, char b, int arr[])
-{
-    int i, j;
-
-    if (a == 'j')
-        a = 'i';
-    else if (b == 'j')
-        b = 'i';
-
-    for (i = 0; i < 5; i++)
-    {
-
-        for (j = 0; j < 5; j++)
-        {
-
-            if (keyT[i][j] == a)
-            {
-                arr[0] = i;
-                arr[1] = j;
-            }
-            else if (keyT[i][j] == b)
-            {
-                arr[2] = i;
-                arr[3] = j;
-            }
+void encrypt(char *new_key, char *message, char *cipher) {
+    int len = strlen(message), idx = 0;
+    int r1, c1, r2, c2;
+    for (int i = 0; i < len; i += 2) {
+        r1 = strchr(new_key, message[i]) - new_key;
+        c1 = r1 % 5;
+        r1 /= 5;
+        r2 = strchr(new_key, message[i + 1]) - new_key;
+        c2 = r2 % 5;
+        r2 /= 5;
+        if (r1 == r2) {
+            cipher[idx++] = new_key[r1 * 5 + (c1 + 1) % 5];
+            cipher[idx++] = new_key[r2 * 5 + (c2 + 1) % 5];
         }
-    }
-}
-
-int mod5(int a) { return (a % 5); }
-
-int mod5d(int a)
-{
-	if (a < 0)
-		a += 5;
-	return (a % 5);
-}
-
-
-int prepare(char str[], int ptrs)
-{
-    if (ptrs % 2 != 0)
-    {
-        str[ptrs++] = 'z';
-        str[ptrs] = '\0';
-    }
-    return ptrs;
-}
-
-void encrypt(char str[], char keyT[5][5], int ps)
-{
-    int i, a[4];
-
-    for (i = 0; i < ps; i += 2) {
-        search(keyT, str[i], str[i + 1], a);
-
-        if (a[0] == a[2])
-        {
-            str[i] = keyT[a[0]][mod5(a[1] + 1)];
-            str[i + 1] = keyT[a[0]][mod5(a[3] + 1)];
-        }
-        else if (a[1] == a[3])
-        {
-            str[i] = keyT[mod5(a[0] + 1)][a[1]];
-            str[i + 1] = keyT[mod5(a[2] + 1)][a[1]];
-        }
-        else
-        {
-            str[i] = keyT[a[0]][a[3]];
-            str[i + 1] = keyT[a[2]][a[1]];
-        }
-    }
-}
-
-void decrypt(char str[], char keyT[5][5], int ps)
-{
-    int i, a[4];
-    for (i = 0; i < ps; i += 2) {
-        search(keyT, str[i], str[i + 1], a);
-        if (a[0] == a[2]) {
-            str[i] = keyT[a[0]][mod5d(a[1] - 1)];
-            str[i + 1] = keyT[a[0]][mod5d(a[3] - 1)];
-        }
-        else if (a[1] == a[3]) {
-            str[i] = keyT[mod5d(a[0] - 1)][a[1]];
-            str[i + 1] = keyT[mod5d(a[2] - 1)][a[1]];
+        else if (c1 == c2) {
+            cipher[idx++] = new_key[((r1 + 1) % 5) * 5 + c1];
+            cipher[idx++] = new_key[((r2 + 1) % 5) * 5 + c2];
         }
         else {
-            str[i] = keyT[a[0]][a[3]];
-            str[i + 1] = keyT[a[2]][a[1]];
+            cipher[idx++] = new_key[r1 * 5 + c2];
+            cipher[idx++] = new_key[r2 * 5 + c1];
         }
     }
+    cipher[idx] = '\0';
 }
 
-void encryptByPlayfairCipher(char str[], char key[])
-{
-    char ps, ks, keyT[5][5];
-
-    printf("Enter the key: ");
-    scanf("%s", key);
-    ks = strlen(key);
-    ks = removeSpaces(key, ks);
-    toLowerCase(key, ks);
-
-    printf("Enter the plain text: ");
-    scanf("%s", str);
-    ps = strlen(str);
-    toLowerCase(str, ps);
-    ps = removeSpaces(str, ps);
-
-    ps = prepare(str, ps);
-
-    generateKeyTable(key, ks, keyT);
-
-    encrypt(str, keyT, ps);
-}
-
-void decryptByPlayfairCipher(char str[], char key[])
-{
-    char ps, ks, keyT[5][5];
-
-    printf("Enter the key: ");
-    scanf("%s", key);
-    ks = strlen(key);
-    ks = removeSpaces(key, ks);
-    toLowerCase(key, ks);
-
-    printf("Enter the cipher text: ");
-    scanf("%s", str);
-    ps = strlen(str);
-    toLowerCase(str, ps);
-    ps = removeSpaces(str, ps);
-
-    ps = prepare(str, ps);
-
-    generateKeyTable(key, ks, keyT);
-
-    decrypt(str, keyT, ps);
-}
-
-int main()
-{
-    char str[SIZE], key[SIZE];
-    
-    int choice;
-    printf("Enter your choice:\n1. Encryption\n2. Decryption\n");
-    scanf("%d", &choice);
-
-    switch (choice)
-    {
-    case 1:
-        encryptByPlayfairCipher(str, key);
-        printf("Cipher text: %s\n", str);
-        break;
-    case 2:
-        decryptByPlayfairCipher(str, key);
-        printf("Plain text: %s\n", str);
-        break;
-    default:
-        printf("Invalid choice\n");
+void decrypt(char *new_key, char *cipher, char *message) {
+    int len = strlen(cipher), idx = 0;
+    int r1, c1, r2, c2;
+    for (int i = 0; i < len; i += 2) {
+        r1 = strchr(new_key, cipher[i]) - new_key;
+        c1 = r1 % 5;
+        r1 /= 5;
+        r2 = strchr(new_key, cipher[i + 1]) - new_key;
+        c2 = r2 % 5;
+        r2 /= 5;
+        if (r1 == r2) {
+            message[idx++] = new_key[r1 * 5 + (c1 - 1 + 5) % 5];
+            message[idx++] = new_key[r2 * 5 + (c2 - 1 + 5) % 5];
+        }
+        else if (c1 == c2) {
+            message[idx++] = new_key[((r1 - 1 + 5) % 5) * 5 + c1];
+            message[idx++] = new_key[((r2 - 1 + 5) % 5) * 5 + c2];
+        }
+        else {
+            message[idx++] = new_key[r1 * 5 + c2];
+            message[idx++] = new_key[r2 * 5 + c1];
+        }
     }
+    message[idx] = '\0';
+    if (message[idx - 1] == 'X') {
+        message[idx - 1] = '\0';
+    }
+}
+
+int main() {
+    char key[MAX_SIZE], message[MAX_SIZE], new_key[MAX_SIZE], cipher[MAX_SIZE], decrypted[MAX_SIZE];
+    printf("Enter the key: ");
+    fgets(key, MAX_SIZE, stdin);
+    key[strcspn(key, "\n")] = '\0';
+    printf("Enter the message: ");
+    fgets(message, MAX_SIZE, stdin);
+    message[strcspn(message, "\n")] = '\0';
+    preprocess(key, new_key);
+
+    printKeyMatrix(new_key);
+
+    formatMessage(message);
+    encrypt(new_key, message, cipher);
+    printf("The encrypted message is: %s\n", cipher);
+    decrypt(new_key, cipher, decrypted);
+    printf("The decrypted message is: %s\n", decrypted);
     return 0;
 }
